@@ -168,6 +168,8 @@ namespace Gameplay
 		void StickCollectionController::ProcessInsertionSort()
 		{
 			Sound::SoundService* sound_service = ServiceLocator::getInstance()->getSoundService();
+			time_complexity = "O(n^2)";
+
 			int i;
 			for (i = 1; i < sticks.size(); ++i)
 			{
