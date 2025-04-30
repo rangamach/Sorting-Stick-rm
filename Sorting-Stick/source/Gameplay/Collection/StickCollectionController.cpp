@@ -262,6 +262,7 @@ namespace Gameplay
 
 		void StickCollectionController::ProcessInPlaceMergeSort()
 		{
+			time_complexity = "O(nLog(n))";
 			InPlaceMergeSort(0, sticks.size() - 1);
 			SetCompletedColor();
 		}
