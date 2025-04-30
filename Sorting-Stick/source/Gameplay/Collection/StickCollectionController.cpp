@@ -260,6 +260,71 @@ namespace Gameplay
 			SetCompletedColor();
 		}
 
+		void StickCollectionController::ProcessInPlaceMergeSort()
+		{
+			InPlaceMergeSort(0, sticks.size() - 1);
+			SetCompletedColor();
+		}
+
+		void StickCollectionController::InPlaceMergeSort(int left, int right)
+		{
+			if (left < right)
+			{
+				int middle = left + (right - left) / 2;
+
+				InPlaceMergeSort(left, middle);
+				InPlaceMergeSort(middle + 1, right);
+
+				InPlaceMerge(left, middle, right);
+			}
+		}
+
+		void StickCollectionController::InPlaceMerge(int left, int middle, int right)
+		{
+			Sound::SoundService* sound_service = ServiceLocator::getInstance()->getSoundService();
+
+			int start = middle + 1;
+
+			if (sticks[middle]->data <= sticks[start]->data)
+			{
+				number_of_comparisons++;
+				number_of_array_access += 2;
+				
+				return;
+			}
+
+			while (left <= middle && start <= right)
+			{
+				number_of_comparisons++;
+				number_of_array_access += 2;
+
+				if (sticks[left]->data <= sticks[start]->data)
+					left++;
+				else
+				{
+					Stick* value = sticks[start];
+					int index = start;
+					while (index != left)
+					{
+						sticks[index] = sticks[index - 1];
+						index--;
+						number_of_array_access += 2;
+					}
+					sticks[left] = value;
+					number_of_array_access++;
+
+					left++;
+					middle++;
+					start++;
+
+					updateStickPosition();
+				}
+				sound_service->playSound(Sound::SoundType::COMPARE_SFX);
+				sticks[left - 1]->stick_view->setFillColor(collection_model->processing_element_color);
+				std::this_thread::sleep_for(std::chrono::milliseconds(current_operation_delay));
+				sticks[left - 1]->stick_view->setFillColor(collection_model->element_color);
+			}
+		}
 
 		void StickCollectionController::resetSticksColor()
 		{
@@ -300,6 +365,9 @@ namespace Gameplay
 				break;
 			case Gameplay::Collection::SortType::SELECTION_SORT:
 				sort_thread = std::thread(&StickCollectionController::ProcessSelectionSort, this);
+				break;
+			case Gameplay::Collection::SortType::MERGE_SORT:
+				sort_thread = std::thread(&StickCollectionController::ProcessInPlaceMergeSort, this);
 				break;
 			}
 		}
