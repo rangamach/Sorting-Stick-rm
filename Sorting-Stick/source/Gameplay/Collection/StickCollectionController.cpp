@@ -216,6 +216,49 @@ namespace Gameplay
 			SetCompletedColor();
 		}
 
+		void StickCollectionController::ProcessSelectionSort()
+		{
+			Sound::SoundService* sound_service = ServiceLocator::getInstance()->getSoundService();
+
+			int i;
+			for (i = 0; i < sticks.size() - 1; ++i)
+			{
+				if (sort_state == SortState::NotSorting) break;
+				int min_index = i;
+				sticks[i]->stick_view->setFillColor(collection_model->selected_element_color);
+				int j;
+				for (j = i + 1; j < sticks.size(); ++j)
+				{
+					if (sort_state == SortState::NotSorting) break;
+					
+					number_of_array_access+=2;
+					number_of_comparisons++;
+
+					sound_service->playSound(Sound::SoundType::COMPARE_SFX);
+					sticks[j]->stick_view->setFillColor(collection_model->processing_element_color);
+					std::this_thread::sleep_for(std::chrono::milliseconds(current_operation_delay));
+
+					if (sticks[j]->data < sticks[min_index]->data)
+					{
+						if (min_index != i)
+							sticks[min_index]->stick_view->setFillColor(collection_model->element_color);
+						min_index = j;
+						sticks[min_index]->stick_view->setFillColor(collection_model->processing_element_color);
+					}
+					else
+						sticks[j]->stick_view->setFillColor(collection_model->element_color);
+				}
+				number_of_array_access += 3;
+				std::swap(sticks[min_index], sticks[i]);
+
+				sticks[i]->stick_view->setFillColor(collection_model->placement_position_element_color);
+				updateStickPosition();
+			}
+			sticks[sticks.size() - 1]->stick_view->setFillColor(collection_model->placement_position_element_color);
+
+			SetCompletedColor();
+		}
+
 
 		void StickCollectionController::resetSticksColor()
 		{
@@ -253,6 +296,9 @@ namespace Gameplay
 				break;
 			case Gameplay::Collection::SortType::INSERTION_SORT:
 				sort_thread = std::thread(&StickCollectionController::ProcessInsertionSort, this);
+				break;
+			case Gameplay::Collection::SortType::SELECTION_SORT:
+				sort_thread = std::thread(&StickCollectionController::ProcessSelectionSort, this);
 				break;
 			}
 		}
