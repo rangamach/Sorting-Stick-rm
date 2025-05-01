@@ -477,6 +477,8 @@ namespace Gameplay
 
 		void StickCollectionController::ProcessRadixSort()
 		{
+			time_complexity = "O(w*(n+k))";
+
 			RadixSort();
 
 			SetCompletedColor();
