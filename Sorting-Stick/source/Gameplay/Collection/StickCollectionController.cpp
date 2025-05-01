@@ -405,6 +405,66 @@ namespace Gameplay
 			}
 		}
 
+		void StickCollectionController::ProcessQuickSort()
+		{
+			QuickSort(0, sticks.size() - 1);
+
+			SetCompletedColor();
+		}
+
+		int StickCollectionController::Partition(int left, int right)
+		{
+			Sound::SoundService* sound_service = ServiceLocator::getInstance()->getSoundService();
+
+			sticks[right]->stick_view->setFillColor(collection_model->selected_element_color);
+
+			int i = left - 1;
+			int j;
+			for (j = left; j < right; ++j)
+			{
+				sticks[j]->stick_view->setFillColor(collection_model->processing_element_color);
+				number_of_array_access += 2;
+				number_of_comparisons++;
+
+				if (sticks[j]->data < sticks[right]->data)
+				{
+					++i;
+					std::swap(sticks[i], sticks[j]);
+					number_of_array_access += 3;
+					sound_service->playSound(Sound::SoundType::COMPARE_SFX);
+
+					updateStickPosition();
+					std::this_thread::sleep_for(std::chrono::milliseconds(current_operation_delay));
+				}
+				sticks[j]->stick_view->setFillColor(collection_model->element_color);
+			}
+			std::swap(sticks[i + 1], sticks[right]);
+			number_of_array_access += 3;
+
+			updateStickPosition();
+
+			return i + 1;
+
+		}
+
+		void StickCollectionController::QuickSort(int left, int right)
+		{
+			if (left < right)
+			{
+				int pivot_index = Partition(left, right);
+
+				QuickSort(left, pivot_index - 1);
+				QuickSort(pivot_index + 1, right);
+
+				int i;
+				for (i = left; i <= right; i++)
+				{
+					sticks[i]->stick_view->setFillColor(collection_model->placement_position_element_color);
+					updateStickPosition();
+				}
+			}
+		}
+
 		void StickCollectionController::resetSticksColor()
 		{
 			for (int i = 0; i < sticks.size(); i++) sticks[i]->stick_view->setFillColor(collection_model->element_color);
@@ -447,6 +507,9 @@ namespace Gameplay
 				break;
 			case Gameplay::Collection::SortType::MERGE_SORT:
 				sort_thread = std::thread(&StickCollectionController::ProcessMergeSort, this);
+				break;
+			case Gameplay::Collection::SortType::QUICK_SORT:
+				sort_thread = std::thread(&StickCollectionController::ProcessQuickSort, this);
 				break;
 			}
 		}
