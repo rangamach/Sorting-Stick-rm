@@ -407,6 +407,8 @@ namespace Gameplay
 
 		void StickCollectionController::ProcessQuickSort()
 		{
+			time_complexity = "O(nLog(n))";
+
 			QuickSort(0, sticks.size() - 1);
 
 			SetCompletedColor();
